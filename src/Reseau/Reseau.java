@@ -1,7 +1,6 @@
-package Reseau;
+package reseau;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Liaison d'une ou plusieurs maisons à un ou plusieurs generateurs
@@ -9,11 +8,9 @@ import java.util.Map;
 public class Reseau {
     private String nom;
 
-    /** Ensemble des maisons du reseau */
-    private HashMap<String, Maison> maisons;
 
     /** Ensemble des generateurs du reseau */
-    private HashMap<String, Generateur> generateurs;
+    private List<Generateur> generateurs;
 
     /** Ensemble des connexions du reseau */
     private HashMap<Maison, Generateur> connexions;
@@ -46,8 +43,7 @@ public class Reseau {
      */
     public Reseau(String nom, double penalite) {
         this.nom = nom;
-        this.maisons = new HashMap<String, Maison>();
-        this.generateurs = new HashMap<String, Generateur>();
+        this.generateurs = new ArrayList<Generateur>();
         this.connexions = new HashMap<Maison, Generateur>();
         this.penalite = penalite;
         capacite = 0;
@@ -63,16 +59,31 @@ public class Reseau {
         if(charge > capacite){
             throw new Exception("La capacité du réseau doit être supérieur à sa charge.\nAjoutez d'abord un générateur avant d'ajouter une nouvelle maison");
         }
-        maisons.put(maison.getNom(), maison);
+        connexions.put(maison,null);
+    }
+
+    public void addMaison(String nom,String conso) throws Exception {
+        Consommation c = Consommation.valueOf(conso);
+        Maison m = new Maison(nom,c);
+        addMaison(m);
     }
 
     /**
-     * Ajour un generateur au reseau
+     * Ajoute un generateur au reseau
      * @param generateur
      */
     public void addGenerateur(Generateur generateur) {
-        generateurs.put(generateur.getNom(), generateur);
+        generateurs.add(generateur);
         capacite += generateur.getCapacite();
+    }
+
+    /**
+     * Ajoute un generateur au reseau
+     * @param nom
+     * @param charge
+     */
+    public void addGenerateur(String nom, int charge) {
+        addGenerateur(new Generateur(nom,charge));
     }
 
     /**
@@ -85,8 +96,12 @@ public class Reseau {
         generateur.addMaison(maison);
     }
 
+    public void addConnexion(String maisonNom, String generateurNom) {
+        addConnexion(getMaison(maisonNom),getGenerateur(generateurNom));
+    }
+
     public void supprConnexion(Maison maison, Generateur generateur) {
-        connexions.remove(maison);
+        connexions.put(maison,null);
         generateur.supprimerMaison(maison);
     }
 
@@ -115,7 +130,7 @@ public class Reseau {
      */
     private void calculTauxUtilisationMoyen() {
         tauxUtilisationMoyen = 0;
-        for (Generateur g : generateurs.values()) {
+        for (Generateur g : generateurs) {
             tauxUtilisationMoyen += g.calculTauxUtilisation();
         }
         tauxUtilisationMoyen = tauxUtilisationMoyen / generateurs.size();
@@ -125,7 +140,7 @@ public class Reseau {
      * Calcule disp et la surcharge totale du reseau
      */
     private void calculDispEtSurcharge(){
-        for (Generateur g : generateurs.values()) {
+        for (Generateur g : generateurs) {
             double tauxUtilisation = g.calculTauxUtilisation();
             disp += Math.abs(tauxUtilisationMoyen - tauxUtilisation);
             if(tauxUtilisation>1){
@@ -152,7 +167,7 @@ public class Reseau {
      * @return True si generateur existe deja sinon False
      */
     public boolean generateurDansReseau(Generateur g) {
-        return generateurs.containsKey(g.getNom());
+        return generateurs.contains(g);
     }
 
     /**
@@ -161,7 +176,12 @@ public class Reseau {
      * @return True si generateur existe deja sinon False
      */
     public boolean generateurDansReseau(String s){
-        return generateurs.containsKey(s);
+        for(Generateur g : generateurs){
+            if(g.getNom().equals(s)){
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -170,7 +190,7 @@ public class Reseau {
      * @return  True si maison exite deja sinon False
      */
     public boolean maisonDansReseau(Maison m) {
-        return maisons.containsKey(m.getNom());
+        return connexions.containsKey(m);
     }
 
     /**
@@ -179,7 +199,12 @@ public class Reseau {
      * @return  True si maison exite deja sinon False
      */
     public boolean maisonDansReseau(String s){
-        return maisons.containsKey(s);
+        for(Maison m : connexions.keySet()){
+            if(m.getNom().equals(s)){
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -188,23 +213,94 @@ public class Reseau {
      * @return True si maison deja connectée sinon False
      */
     public boolean maisonConnecte(Maison m) {
-        return connexions.containsKey(m);
+        if(connexions.containsKey(m)){
+            if(connexions.get(m)!=null){
+                return true;
+            }else{
+                return false;
+            }
+        }
+        return false;
+    }
+
+    public Generateur getGenerateur(String g) {
+        for(Generateur generateur : generateurs){
+            if(generateur.getNom().equals(g)){
+                return generateur;
+            }
+        }
+        return null;
+    }
+
+    public Maison getMaison(String maison) {
+        for(Maison m : connexions.keySet()){
+            if(m.getNom().equals(maison)){
+                return m;
+            }
+        }
+        return null;
     }
 
     @Override
     public String toString(){
         StringBuilder sb = new StringBuilder();
         for(Map.Entry<Maison, Generateur> e : connexions.entrySet()){
-            sb.append(e.getKey().getNom());
-            sb.append(" ----- ");
-            sb.append(e.getValue().getNom());
-            sb.append("\n");
+            if(e.getValue()!=null) {
+                sb.append(e.getKey().getNom());
+                sb.append(" ----- ");
+                sb.append(e.getValue().getNom());
+                sb.append("\n");
+            }
         }
         return sb.toString();
     }
 
-    public HashMap<String,Maison> getMaisons() {
+    public Set<Maison> getMaisons() {
+        return connexions.keySet();
+    }
+
+    public Set<Maison> getMaisons(Generateur g) {
+        Set<Maison> maisons = new HashSet<Maison>();
+        for(Maison m : connexions.keySet()){
+            if(connexions.get(m) == g){
+                maisons.add(m);
+            }
+        }
         return maisons;
+    }
+
+    public void solveurNaif(){
+        int i=0, k=10000;
+
+        List<Maison> maisons = new ArrayList<>(getMaisons());
+        Random rand = new Random();
+
+        while(i < k){
+            Maison maison = maisons.get(rand.nextInt(maisons.size()));
+            Generateur newGenerateur = generateurs.get(rand.nextInt(generateurs.size()));
+            Generateur oldGenerateur = connexions.get(maison);
+
+            calculCout();
+            double oldCost = getCout();
+
+            if (oldGenerateur != null) {
+                changeConnexion(maison, oldGenerateur, newGenerateur);
+            } else {
+                addConnexion(maison, newGenerateur);
+            }
+
+            calculCout();
+            double newCost = getCout();
+
+            if (newCost >= oldCost) {
+                if (oldGenerateur != null) {
+                    changeConnexion(maison, newGenerateur, oldGenerateur);
+                } else {
+                    supprConnexion(maison, newGenerateur);
+                }
+            }
+            i++;
+        }
     }
 
     public HashMap<Maison,Generateur> getConnexions() {
@@ -239,11 +335,12 @@ public class Reseau {
         return capacite;
     }
 
-    public HashMap<String, Generateur> getGenerateurs() {
+    public List<Generateur> getGenerateurs() {
         return generateurs;
     }
 
     public String getNom() {
         return nom;
     }
+
 }

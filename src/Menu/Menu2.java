@@ -1,6 +1,6 @@
-package Menu;
+package menu;
 
-import Reseau.*;
+import reseau.*;
 import java.util.*;
 
 /**
@@ -69,8 +69,8 @@ public class Menu2 {
             return;
         }
         String[] ancienneTable = ancienneLigne.split(" ");
-        String ancienA = ancienneTable[0].toUpperCase();
-        String ancienB = ancienneTable[1].toUpperCase();
+        String ancienA = ancienneTable[0];
+        String ancienB = ancienneTable[1];
 
         String nomMaisonAncienne;
         String nomGenerateurAncien;
@@ -84,8 +84,8 @@ public class Menu2 {
             return;
         }
 
-        Maison maison = reseau.getMaisons().get(nomMaisonAncienne);
-        Generateur generateurAncien = reseau.getGenerateurs().get(nomGenerateurAncien);
+        Maison maison = reseau.getMaison(nomMaisonAncienne);
+        Generateur generateurAncien = reseau.getGenerateur(nomGenerateurAncien);
 
         Generateur generateurActuel = reseau.getConnexions().get(maison);
         if (generateurActuel == null) {
@@ -105,8 +105,8 @@ public class Menu2 {
             return;
         }
         String[] nouvelleTable = nouvelleLigne.split(" ");
-        String nouveauA = nouvelleTable[0].toUpperCase();
-        String nouveauB = nouvelleTable[1].toUpperCase();
+        String nouveauA = nouvelleTable[0];
+        String nouveauB = nouvelleTable[1];
 
         String nomMaisonNouvelle;
         String nomGenerateurNouveau;
@@ -129,7 +129,7 @@ public class Menu2 {
             return;
         }
 
-        Generateur generateurNouveau = reseau.getGenerateurs().get(nomGenerateurNouveau);
+        Generateur generateurNouveau = reseau.getGenerateur(nomGenerateurNouveau);
         reseau.changeConnexion(maison, generateurAncien, generateurNouveau);
         System.out.println("Connexion modifiée : " + nomMaisonAncienne + " ----- " + nomGenerateurAncien + " -> " + nomGenerateurNouveau);
     }
@@ -141,14 +141,16 @@ public class Menu2 {
         System.out.println();
         System.out.println("===== RÉSEAU \"" + reseau.getNom() + "\" =====");
 
-        List<String> nomsGenerateurs = new ArrayList<>(reseau.getGenerateurs().keySet());
+        List<String> nomsGenerateurs = new ArrayList<String>();
+        for(Generateur g : reseau.getGenerateurs()){
+            nomsGenerateurs.add(g.getNom());
+        }
         Collections.sort(nomsGenerateurs);
 
         for(String nomGenerateur : nomsGenerateurs){
-            Generateur generateur = reseau.getGenerateurs().get(nomGenerateur);
-
+            Generateur generateur = reseau.getGenerateur(nomGenerateur);
             List<String> infosMaisons = new ArrayList<>();
-            for(Maison maison : generateur.getMaisons()){
+            for(Maison maison : reseau.getMaisons(generateur)){
                 int consommation = maison.getConsommation();
                 infosMaisons.add(maison.getNom() + "(" + consommation + "kW)");
             }
@@ -164,7 +166,7 @@ public class Menu2 {
         }
 
         List<String> maisonsNonConnectees = new ArrayList<>();
-        for(Maison maison : reseau.getMaisons().values()){
+        for(Maison maison : reseau.getMaisons()){
             if(!reseau.maisonConnecte(maison)){
                 maisonsNonConnectees.add(maison.getNom());
             }

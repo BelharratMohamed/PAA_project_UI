@@ -1,4 +1,4 @@
-package Reseau;
+package reseau;
 
 /**
  * Maison forcément connectée à un generateur
@@ -24,5 +24,9 @@ public class Maison{
 
     public int getConsommation() {
         return conso.getConsommation();
+    }
+
+    public String toString(){
+        return "maison(" + nom + "," + conso.toString() + ").";
     }
 }

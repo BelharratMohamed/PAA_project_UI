@@ -1,4 +1,4 @@
-package Reseau;
+package reseau;
 
 import java.util.HashSet;
 
@@ -12,9 +12,6 @@ public class Generateur {
     private int chargeActuelle;
     
     private String nom;
-    
-    /** Toutes les maisons connectées au generateur*/
-    private HashSet<Maison> maisons;
 
 
     /**
@@ -26,8 +23,6 @@ public class Generateur {
     public Generateur(String nom , int capacite) {
         this.capacite = capacite;
         this.nom = nom;
-        this.maisons = new HashSet<>() {
-        };
     }
 
     /**
@@ -44,7 +39,6 @@ public class Generateur {
      * @param m
      */
     public void addMaison(Maison m){
-        maisons.add(m);
         chargeActuelle += m.getConsommation();
     }
 
@@ -53,7 +47,6 @@ public class Generateur {
      * @param m
      */
     public void supprimerMaison(Maison m){
-        maisons.remove(m);
         chargeActuelle -= m.getConsommation();
     }
 
@@ -62,7 +55,6 @@ public class Generateur {
      * @param m
      */
     public void deleteMaison(Maison m){
-        maisons.remove(m);
         chargeActuelle -= m.getConsommation();
     }
 
@@ -74,7 +66,7 @@ public class Generateur {
         return nom;
     }
 
-    public HashSet<Maison> getMaisons() {
-        return maisons;
+    public String toString(){
+        return "generateur(" + nom + "," + capacite + ").";
     }
 }

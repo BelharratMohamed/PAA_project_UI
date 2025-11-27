@@ -1,4 +1,4 @@
-package Reseau;
+package reseau;
 
 /**
  * Indique la consomation d'une maison BASSE , NORMAL ou FORTE
