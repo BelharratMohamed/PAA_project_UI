@@ -58,8 +58,16 @@ public class Generateur {
         chargeActuelle -= m.getConsommation();
     }
 
+    public void resetCharge() {
+        this.chargeActuelle = 0;
+    }
+
     public int getCapacite() {
         return capacite;
+    }
+
+    public int getChargeActuelle() {
+        return chargeActuelle;
     }
 
     public String getNom() {

@@ -18,7 +18,7 @@ public class Menu3 {
                 switch (choix) {
                     case 1: {
                         System.out.println("Ancien cout : " + reseau.getCout());
-                        reseau.solveurNaif();
+                        reseau.solveurCSP();
                         System.out.println("Nouveau cout : " + reseau.getCout());
                         break;
                     }

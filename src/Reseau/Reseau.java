@@ -298,14 +298,184 @@ public class Reseau {
             if (newCost >= oldCost) {
                 if (oldGenerateur != null) {
                     changeConnexion(maison, newGenerateur, oldGenerateur);
-                } else {
-                    supprConnexion(maison, newGenerateur);
                 }
+            } else {
+                supprConnexion(maison, newGenerateur);
             }
             i++;
         }
     }
 
+    /**
+     * Orchestrates the hybrid solver, running a heuristic to build an initial solution
+     * and then using Simulated Annealing to refine it.
+     */
+    public void solveurCSP() {
+        if (getMaisons().isEmpty() || generateurs.isEmpty()) {
+            return;
+        }
+        // Phase 1: Build a smart initial solution
+        construireSolutionInitialeCSPContrainte();
+
+        // Phase 2: Refine the solution with Simulated Annealing
+        recuitSimuleAvecContrainte();
+    }
+
+    /**
+     * Phase 1: Heuristically builds a good initial solution.
+     * It ensures all generators are used and assigns the largest houses first.
+     */
+    private void construireSolutionInitialeCSPContrainte() {
+        List<Maison> maisons = new ArrayList<>(getMaisons());
+        List<Generateur> generateurs = new ArrayList<>(getGenerateurs());
+
+        // Sort houses by consumption, descending
+        maisons.sort((m1, m2) -> Integer.compare(m2.getConsommation(), m1.getConsommation()));
+
+        // Reset all connections and generator charges
+        for (Generateur g : generateurs) {
+            g.resetCharge();
+        }
+        // This is a bit redundant since addConnexion will overwrite, but clear for safety
+        for (Maison m : maisons) {
+            connexions.put(m, null);
+        }
+
+        int nbGenerateurs = generateurs.size();
+        int nbMaisons = maisons.size();
+
+        // Step 1: Guarantee at least one house per generator to ensure all are used
+        for (int i = 0; i < Math.min(nbGenerateurs, nbMaisons); i++) {
+            addConnexion(maisons.get(i), generateurs.get(i));
+        }
+
+        // Step 2: Distribute remaining houses using a "best fit" heuristic
+        for (int i = nbGenerateurs; i < nbMaisons; i++) {
+            Maison m = maisons.get(i);
+            Generateur meilleurGen = trouverMeilleurGenerateur(m, generateurs);
+            if (meilleurGen != null) {
+                addConnexion(m, meilleurGen);
+            }
+        }
+        calculCout(); // Calculate cost of the initial solution
+    }
+
+    /**
+     * Finds the best generator for a given house based on a scoring system
+     * that favors under-utilized generators and penalizes overloading.
+     */
+    private Generateur trouverMeilleurGenerateur(Maison m, List<Generateur> generateurs) {
+        Generateur meilleurGen = null;
+        double meilleurScore = Double.NEGATIVE_INFINITY;
+
+        for (Generateur g : generateurs) {
+            double chargeActuelle = g.getChargeActuelle();
+            double capaciteRestante = g.getCapacite() - chargeActuelle;
+            double tauxUtilisation = g.calculTauxUtilisation();
+
+            // Score favors generators with remaining capacity and low utilization
+            double score = capaciteRestante * (1.0 - tauxUtilisation);
+
+            // Heavily penalize generators that would be overloaded
+            if (capaciteRestante < m.getConsommation()) {
+                score -= 100000;
+            }
+
+            if (score > meilleurScore) {
+                meilleurScore = score;
+                meilleurGen = g;
+            }
+        }
+        return meilleurGen;
+    }
+
+    /**
+     * Phase 2: Optimizes the current solution using Simulated Annealing.
+     * Includes a constraint to prevent emptying generators.
+     */
+    private void recuitSimuleAvecContrainte() {
+        Random random = new Random();
+        List<Maison> maisons = new ArrayList<>(getMaisons());
+        List<Generateur> generateurs = getGenerateurs();
+
+        if (maisons.isEmpty() || generateurs.size() <= 1) {
+            return; // Cannot perform moves if there's 0 or 1 generator
+        }
+
+        // Parameters for Simulated Annealing
+        double temperature = 100.0;
+        double refroidissement = 0.995;
+        double temperatureMin = 0.01;
+        int iterationsParTemp = Math.max(50, maisons.size());
+
+        // Keep track of the best solution found so far
+        calculCout();
+        double bestCost = getCout();
+        HashMap<Maison, Generateur> bestConnexions = new HashMap<>(this.connexions);
+
+        while (temperature > temperatureMin) {
+            for (int i = 0; i < iterationsParTemp; i++) {
+                if (maisons.isEmpty()) continue;
+
+                // Choose a random house to move
+                Maison maisonToMove = maisons.get(random.nextInt(maisons.size()));
+                Generateur gActuel = connexions.get(maisonToMove);
+
+                // Choose a new, different generator
+                Generateur gNouveau;
+                do {
+                    gNouveau = generateurs.get(random.nextInt(generateurs.size()));
+                } while (gActuel == gNouveau);
+
+                // Constraint: do not make a move that empties a generator
+                int nbMaisonsActuel = 0;
+                for (Generateur g : connexions.values()) {
+                    if (g == gActuel) {
+                        nbMaisonsActuel++;
+                    }
+                }
+                if (nbMaisonsActuel <= 1) {
+                    continue;
+                }
+
+                double coutAvant = getCout();
+
+                // Perform the move
+                changeConnexion(maisonToMove, gActuel, gNouveau);
+                calculCout();
+                double coutApres = getCout();
+                double delta = coutApres - coutAvant;
+
+                // Metropolis acceptance criterion
+                if (delta < 0 || Math.exp(-delta / temperature) > random.nextDouble()) {
+                    // Move accepted
+                    if (coutApres < bestCost) {
+                        bestCost = coutApres;
+                        bestConnexions = new HashMap<>(this.connexions);
+                    }
+                } else {
+                    // Move rejected, revert the change
+                    changeConnexion(maisonToMove, gNouveau, gActuel);
+                    calculCout(); // Recalculate cost back to the 'avant' state
+                }
+            }
+            temperature *= refroidissement; // Cool down
+        }
+
+        // Restore the best solution found during the process
+        this.connexions = bestConnexions;
+        // And restore the state of all generators to match
+        for (Generateur g : generateurs) {
+            g.resetCharge();
+        }
+        for (Map.Entry<Maison, Generateur> entry : this.connexions.entrySet()) {
+            if (entry.getValue() != null) {
+                entry.getValue().addMaison(entry.getKey());
+            }
+        }
+        // Recalculate final cost metrics for the best state
+        calculCout();
+    }
     public HashMap<Maison,Generateur> getConnexions() {
         return connexions;
     }
