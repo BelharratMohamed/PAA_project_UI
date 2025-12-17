@@ -3,46 +3,51 @@ package reseau;
 import java.util.*;
 
 /**
- * Liaison d'une ou plusieurs maisons à un ou plusieurs generateurs
+ * Représente un réseau électrique avec ses générateurs et connexions.
+ * <p>
+ * Gère l'ensemble des maisons, générateurs et leurs connexions. Calcule
+ * le coût global du réseau basé sur la dispersion des taux d'utilisation
+ * et les pénalités de surcharge.
+ *
+ * @author Votre nom
+ * @version 1.0
  */
 public class Reseau {
-    private String nom;
 
-
-    /** Ensemble des generateurs du reseau */
+    /** Liste des générateurs du réseau */
     private List<Generateur> generateurs;
 
-    /** Ensemble des connexions du reseau */
+    /** Map associant chaque maison à son générateur */
     private HashMap<Maison, Generateur> connexions;
 
-    /** Cout du reseau */
+    /** Coût total du réseau (dispersion + pénalités) */
     private double cout;
 
-    /** La moyenne des taux d'utilisation de tous les generateurs */
+    /** Moyenne des taux d'utilisation de tous les générateurs */
     private double tauxUtilisationMoyen;
 
-    /** la somme des écarts de chaque taux d'utilisation par rapport à la moyenne */
+    /** Somme des écarts absolus entre chaque taux d'utilisation et la moyenne */
     private double disp;
 
-    /** severite de la penalite en cas de surcharge */
+    /** Coefficient de pénalité appliqué aux surcharges */
     private double penalite;
 
-    /** la somme de la surcharge de chaque generateur */
+    /** Somme des surcharges de tous les générateurs */
     private double surcharge;
 
-    /** charge actuelle du reseau */
+    /** Charge totale actuelle du réseau en kW */
     private int charge;
 
-    /** capacite du reseau */
+    /** Capacité totale du réseau en kW */
     private int capacite;
 
     /**
-     * Instancie un nouveau reseau
-     * @param nom Nom du reseau
-     * @param penalite Penalite de la surcharge
+     * Crée un nouveau réseau électrique vide.
+     *
+     * @param nom le nom identifiant du réseau
+     * @param penalite le coefficient de pénalité pour les surcharges
      */
     public Reseau(String nom, double penalite) {
-        this.nom = nom;
         this.generateurs = new ArrayList<Generateur>();
         this.connexions = new HashMap<Maison, Generateur>();
         this.penalite = penalite;
@@ -51,26 +56,43 @@ public class Reseau {
     }
 
     /**
-     * Ajoute la maison au reseau
-     * @param maison
+     * Ajoute une maison au réseau sans la connecter.
+     * <p>
+     * Vérifie que la capacité totale du réseau est suffisante
+     * pour supporter la charge supplémentaire.
+     *
+     * @param maison la maison à ajouter
+     * @throws IllegalStateException si la capacité du réseau est insuffisante
      */
-    public void addMaison(Maison maison) throws Exception{
+    public void addMaison(Maison maison) throws IllegalStateException {
         charge += maison.getConsommation();
-        if(charge > capacite){
-            throw new Exception("La capacité du réseau doit être supérieur à sa charge.\nAjoutez d'abord un générateur avant d'ajouter une nouvelle maison");
+        if (charge > capacite) {
+            charge -= maison.getConsommation(); // Rollback
+            throw new IllegalStateException(
+                    "La capacité du réseau doit être supérieure à sa charge.\n" +
+                            "Ajoutez d'abord un générateur avant d'ajouter une nouvelle maison");
         }
-        connexions.put(maison,null);
+        connexions.put(maison, null);
     }
 
-    public void addMaison(String nom,String conso) throws Exception {
-        Consommation c = Consommation.valueOf(conso);
-        Maison m = new Maison(nom,c);
+    /**
+     * Ajoute une maison au réseau à partir de son nom et sa consommation.
+     *
+     * @param nom le nom de la maison
+     * @param conso la consommation de la maison (BASSE, NORMAL ou FORTE)
+     * @throws IllegalStateException si la capacité du réseau est insuffisante
+     * @throws IllegalArgumentException si la consommation n'est pas valide
+     */
+    public void addMaison(String nom, String conso) throws IllegalStateException, IllegalArgumentException {
+        Consommation c = Consommation.valueOf(conso); // Peut lancer IllegalArgumentException
+        Maison m = new Maison(nom, c);
         addMaison(m);
     }
 
     /**
-     * Ajoute un generateur au reseau
-     * @param generateur
+     * Ajoute un générateur au réseau et augmente la capacité totale.
+     *
+     * @param generateur le générateur à ajouter
      */
     public void addGenerateur(Generateur generateur) {
         generateurs.add(generateur);
@@ -78,55 +100,70 @@ public class Reseau {
     }
 
     /**
-     * Ajoute un generateur au reseau
-     * @param nom
-     * @param charge
+     * Ajoute un générateur au réseau à partir de son nom et sa capacité.
+     *
+     * @param nom le nom du générateur
+     * @param charge la capacité du générateur en kW
      */
     public void addGenerateur(String nom, int charge) {
-        addGenerateur(new Generateur(nom,charge));
+        addGenerateur(new Generateur(nom, charge));
     }
 
     /**
-     * Ajoute une connexion au reseau
-     * @param maison Maison à relié au generateur
-     * @param generateur Generateur relié a la maison
+     * Crée une connexion entre une maison et un générateur.
+     * <p>
+     * Met à jour la map de connexions et ajoute la maison au générateur.
+     *
+     * @param maison la maison à connecter
+     * @param generateur le générateur cible
      */
     public void addConnexion(Maison maison, Generateur generateur) {
         connexions.put(maison, generateur);
         generateur.addMaison(maison);
     }
 
+    /**
+     * Crée une connexion à partir des noms de la maison et du générateur.
+     *
+     * @param maisonNom le nom de la maison
+     * @param generateurNom le nom du générateur
+     */
     public void addConnexion(String maisonNom, String generateurNom) {
-        addConnexion(getMaison(maisonNom),getGenerateur(generateurNom));
+        addConnexion(getMaison(maisonNom), getGenerateur(generateurNom));
     }
 
+    /**
+     * Supprime la connexion entre une maison et un générateur.
+     * <p>
+     * La maison reste dans le réseau mais n'est plus connectée.
+     *
+     * @param maison la maison à déconnecter
+     * @param generateur le générateur à déconnecter
+     */
     public void supprConnexion(Maison maison, Generateur generateur) {
-        connexions.put(maison,null);
+        connexions.put(maison, null);
         generateur.supprimerMaison(maison);
     }
 
     /**
-     * Changement de connexion de la maison m1
-     * @param m1 Maison qui change de generateur
-     * @param g1 Generateur initial
-     * @param g2 Nouveau generateur
+     * Change la connexion d'une maison d'un générateur vers un autre.
+     * <p>
+     * Opération atomique utilisée par les algorithmes d'optimisation.
+     *
+     * @param m1 la maison à déplacer
+     * @param g1 le générateur source
+     * @param g2 le générateur cible
      */
     public void changeConnexion(Maison m1, Generateur g1, Generateur g2) {
         connexions.put(m1, g2);
-        g1.deleteMaison(m1);
+        g1.supprimerMaison(m1);
         g2.addMaison(m1);
     }
 
     /**
-     * Verifie si chaque maison est bien connecté à un et un seul generateur
-     * @return
-     */
-    public boolean verification() {
-        return true;
-    }
-
-    /**
-     * Calcule le taux d'utilisation moyen du reseau
+     * Calcule le taux d'utilisation moyen de tous les générateurs.
+     * <p>
+     * Utilisé comme référence pour le calcul de dispersion.
      */
     private void calculTauxUtilisationMoyen() {
         tauxUtilisationMoyen = 0;
@@ -137,47 +174,55 @@ public class Reseau {
     }
 
     /**
-     * Calcule disp et la surcharge totale du reseau
+     * Calcule la dispersion et la surcharge totale du réseau.
+     * <p>
+     * Dispersion : somme des écarts absolus au taux moyen.
+     * Surcharge : somme des dépassements de capacité (taux &gt; 1).
      */
-    private void calculDispEtSurcharge(){
+    private void calculDispEtSurcharge() {
         for (Generateur g : generateurs) {
             double tauxUtilisation = g.calculTauxUtilisation();
             disp += Math.abs(tauxUtilisationMoyen - tauxUtilisation);
-            if(tauxUtilisation>1){
-                surcharge += tauxUtilisation-1;
+            if (tauxUtilisation > 1) {
+                surcharge += tauxUtilisation - 1;
             }
         }
     }
 
-
     /**
-     * Calcul le cout du reseau
+     * Calcule le coût total du réseau.
+     * <p>
+     * Formule : coût = dispersion + (pénalité × surcharge)
+     * <p>
+     * Réinitialise et recalcule tous les indicateurs.
      */
     public void calculCout() {
         disp = 0;
         surcharge = 0;
         calculTauxUtilisationMoyen();
         calculDispEtSurcharge();
-        cout = disp + (penalite*surcharge);
+        cout = disp + (penalite * surcharge);
     }
 
     /**
-     * Regarde si le generateur est deja dans le reseau
-     * @param g generateur à vérifier
-     * @return True si generateur existe deja sinon False
+     * Vérifie si un générateur existe déjà dans le réseau.
+     *
+     * @param g le générateur à vérifier
+     * @return true si le générateur est présent dans le réseau
      */
     public boolean generateurDansReseau(Generateur g) {
         return generateurs.contains(g);
     }
 
     /**
-     * Regarde si le generateur est deja dans le reseau
-     * @param s nom du generateur à vérifier
-     * @return True si generateur existe deja sinon False
+     * Vérifie si un générateur existe dans le réseau par son nom.
+     *
+     * @param s le nom du générateur
+     * @return true si un générateur avec ce nom existe
      */
-    public boolean generateurDansReseau(String s){
-        for(Generateur g : generateurs){
-            if(g.getNom().equals(s)){
+    public boolean generateurDansReseau(String s) {
+        for (Generateur g : generateurs) {
+            if (g.getNom().equals(s)) {
                 return true;
             }
         }
@@ -185,22 +230,24 @@ public class Reseau {
     }
 
     /**
-     * Regarde si la maison est deja dans le reseau
-     * @param m maison à verifier
-     * @return  True si maison exite deja sinon False
+     * Vérifie si une maison existe dans le réseau.
+     *
+     * @param m la maison à vérifier
+     * @return true si la maison est présente dans le réseau
      */
     public boolean maisonDansReseau(Maison m) {
         return connexions.containsKey(m);
     }
 
     /**
-     * Regarde si la maison est deja dans le reseau
-     * @param s nom de la maison à verifier
-     * @return  True si maison exite deja sinon False
+     * Vérifie si une maison existe dans le réseau par son nom.
+     *
+     * @param s le nom de la maison
+     * @return true si une maison avec ce nom existe
      */
-    public boolean maisonDansReseau(String s){
-        for(Maison m : connexions.keySet()){
-            if(m.getNom().equals(s)){
+    public boolean maisonDansReseau(String s) {
+        for (Maison m : connexions.keySet()) {
+            if (m.getNom().equals(s)) {
                 return true;
             }
         }
@@ -208,44 +255,57 @@ public class Reseau {
     }
 
     /**
-     * Regarde si la maison est déjà connectée à un generateur
-     * @param m maison a verifier
-     * @return True si maison deja connectée sinon False
+     * Vérifie si une maison est actuellement connectée à un générateur.
+     *
+     * @param m la maison à vérifier
+     * @return true si la maison est connectée, false sinon
      */
     public boolean maisonConnecte(Maison m) {
-        if(connexions.containsKey(m)){
-            if(connexions.get(m)!=null){
-                return true;
-            }else{
-                return false;
-            }
-        }
-        return false;
+        return connexions.containsKey(m) && connexions.get(m) != null;
     }
 
+    /**
+     * Recherche un générateur par son nom.
+     *
+     * @param g le nom du générateur
+     * @return le générateur correspondant, ou null si non trouvé
+     */
     public Generateur getGenerateur(String g) {
-        for(Generateur generateur : generateurs){
-            if(generateur.getNom().equals(g)){
+        for (Generateur generateur : generateurs) {
+            if (generateur.getNom().equals(g)) {
                 return generateur;
             }
         }
         return null;
     }
 
+    /**
+     * Recherche une maison par son nom.
+     *
+     * @param maison le nom de la maison
+     * @return la maison correspondante, ou null si non trouvée
+     */
     public Maison getMaison(String maison) {
-        for(Maison m : connexions.keySet()){
-            if(m.getNom().equals(maison)){
+        for (Maison m : connexions.keySet()) {
+            if (m.getNom().equals(maison)) {
                 return m;
             }
         }
         return null;
     }
 
+    /**
+     * Retourne une représentation textuelle des connexions du réseau.
+     * <p>
+     * Format : {@code maison ----- générateur} pour chaque connexion.
+     *
+     * @return la chaîne représentant toutes les connexions
+     */
     @Override
-    public String toString(){
+    public String toString() {
         StringBuilder sb = new StringBuilder();
-        for(Map.Entry<Maison, Generateur> e : connexions.entrySet()){
-            if(e.getValue()!=null) {
+        for (Map.Entry<Maison, Generateur> e : connexions.entrySet()) {
+            if (e.getValue() != null) {
                 sb.append(e.getKey().getNom());
                 sb.append(" ----- ");
                 sb.append(e.getValue().getNom());
@@ -255,265 +315,109 @@ public class Reseau {
         return sb.toString();
     }
 
+    /**
+     * Retourne l'ensemble de toutes les maisons du réseau.
+     *
+     * @return le Set des maisons
+     */
     public Set<Maison> getMaisons() {
-        return connexions.keySet();
+        return Collections.unmodifiableSet(connexions.keySet());
     }
 
+    /**
+     * Retourne l'ensemble des maisons connectées à un générateur donné.
+     *
+     * @param g le générateur
+     * @return le Set des maisons connectées à ce générateur
+     */
     public Set<Maison> getMaisons(Generateur g) {
         Set<Maison> maisons = new HashSet<Maison>();
-        for(Maison m : connexions.keySet()){
-            if(connexions.get(m) == g){
+        for (Maison m : connexions.keySet()) {
+            if (connexions.get(m) == g) {
                 maisons.add(m);
             }
         }
         return maisons;
     }
 
-    public void solveurNaif(){
-        if (getMaisons().isEmpty() || generateurs.isEmpty()) {
-            return;
-        }
-        int i=0, k=10000;
-
-        List<Maison> maisons = new ArrayList<>(getMaisons());
-        Random rand = new Random();
-
-        while(i < k){
-            Maison maison = maisons.get(rand.nextInt(maisons.size()));
-            Generateur newGenerateur = generateurs.get(rand.nextInt(generateurs.size()));
-            Generateur oldGenerateur = connexions.get(maison);
-
-            calculCout();
-            double oldCost = getCout();
-
-            if (oldGenerateur != null) {
-                changeConnexion(maison, oldGenerateur, newGenerateur);
-            } else {
-                addConnexion(maison, newGenerateur);
-            }
-
-            calculCout();
-            double newCost = getCout();
-
-            if (newCost >= oldCost) {
-                if (oldGenerateur != null) {
-                    changeConnexion(maison, newGenerateur, oldGenerateur);
-                }
-            } else {
-                supprConnexion(maison, newGenerateur);
-            }
-            i++;
-        }
+    /**
+     * Retourne la map complète des connexions maison-générateur.
+     *
+     * @return la HashMap des connexions
+     */
+    public Map<Maison, Generateur> getConnexions() {
+        return Collections.unmodifiableMap(connexions);
     }
 
     /**
-     * Orchestrates the hybrid solver, running a heuristic to build an initial solution
-     * and then using Simulated Annealing to refine it.
+     * Retourne le coût total du réseau.
+     *
+     * @return le coût calculé
      */
-    public void solveurCSP() {
-        if (getMaisons().isEmpty() || generateurs.isEmpty()) {
-            return;
-        }
-        // Phase 1: Build a smart initial solution
-        construireSolutionInitialeCSPContrainte();
-
-        // Phase 2: Refine the solution with Simulated Annealing
-        recuitSimuleAvecContrainte();
-    }
-
-    /**
-     * Phase 1: Heuristically builds a good initial solution.
-     * It ensures all generators are used and assigns the largest houses first.
-     */
-    private void construireSolutionInitialeCSPContrainte() {
-        List<Maison> maisons = new ArrayList<>(getMaisons());
-        List<Generateur> generateurs = new ArrayList<>(getGenerateurs());
-
-        // Sort houses by consumption, descending
-        maisons.sort((m1, m2) -> Integer.compare(m2.getConsommation(), m1.getConsommation()));
-
-        // Reset all connections and generator charges
-        for (Generateur g : generateurs) {
-            g.resetCharge();
-        }
-        // This is a bit redundant since addConnexion will overwrite, but clear for safety
-        for (Maison m : maisons) {
-            connexions.put(m, null);
-        }
-
-        int nbGenerateurs = generateurs.size();
-        int nbMaisons = maisons.size();
-
-        // Step 1: Guarantee at least one house per generator to ensure all are used
-        for (int i = 0; i < Math.min(nbGenerateurs, nbMaisons); i++) {
-            addConnexion(maisons.get(i), generateurs.get(i));
-        }
-
-        // Step 2: Distribute remaining houses using a "best fit" heuristic
-        for (int i = nbGenerateurs; i < nbMaisons; i++) {
-            Maison m = maisons.get(i);
-            Generateur meilleurGen = trouverMeilleurGenerateur(m, generateurs);
-            if (meilleurGen != null) {
-                addConnexion(m, meilleurGen);
-            }
-        }
-        calculCout(); // Calculate cost of the initial solution
-    }
-
-    /**
-     * Finds the best generator for a given house based on a scoring system
-     * that favors under-utilized generators and penalizes overloading.
-     */
-    private Generateur trouverMeilleurGenerateur(Maison m, List<Generateur> generateurs) {
-        Generateur meilleurGen = null;
-        double meilleurScore = Double.NEGATIVE_INFINITY;
-
-        for (Generateur g : generateurs) {
-            double chargeActuelle = g.getChargeActuelle();
-            double capaciteRestante = g.getCapacite() - chargeActuelle;
-            double tauxUtilisation = g.calculTauxUtilisation();
-
-            // Score favors generators with remaining capacity and low utilization
-            double score = capaciteRestante * (1.0 - tauxUtilisation);
-
-            // Heavily penalize generators that would be overloaded
-            if (capaciteRestante < m.getConsommation()) {
-                score -= 100000;
-            }
-
-            if (score > meilleurScore) {
-                meilleurScore = score;
-                meilleurGen = g;
-            }
-        }
-        return meilleurGen;
-    }
-
-    /**
-     * Phase 2: Optimizes the current solution using Simulated Annealing.
-     * Includes a constraint to prevent emptying generators.
-     */
-    private void recuitSimuleAvecContrainte() {
-        Random random = new Random();
-        List<Maison> maisons = new ArrayList<>(getMaisons());
-        List<Generateur> generateurs = getGenerateurs();
-
-        if (maisons.isEmpty() || generateurs.size() <= 1) {
-            return; // Cannot perform moves if there's 0 or 1 generator
-        }
-
-        // Parameters for Simulated Annealing
-        double temperature = 100.0;
-        double refroidissement = 0.995;
-        double temperatureMin = 0.01;
-        int iterationsParTemp = Math.max(50, maisons.size());
-
-        // Keep track of the best solution found so far
-        calculCout();
-        double bestCost = getCout();
-        HashMap<Maison, Generateur> bestConnexions = new HashMap<>(this.connexions);
-
-        while (temperature > temperatureMin) {
-            for (int i = 0; i < iterationsParTemp; i++) {
-                if (maisons.isEmpty()) continue;
-
-                // Choose a random house to move
-                Maison maisonToMove = maisons.get(random.nextInt(maisons.size()));
-                Generateur gActuel = connexions.get(maisonToMove);
-
-                // Choose a new, different generator
-                Generateur gNouveau;
-                do {
-                    gNouveau = generateurs.get(random.nextInt(generateurs.size()));
-                } while (gActuel == gNouveau);
-
-                // Constraint: do not make a move that empties a generator
-                int nbMaisonsActuel = 0;
-                for (Generateur g : connexions.values()) {
-                    if (g == gActuel) {
-                        nbMaisonsActuel++;
-                    }
-                }
-                if (nbMaisonsActuel <= 1) {
-                    continue;
-                }
-
-                double coutAvant = getCout();
-
-                // Perform the move
-                changeConnexion(maisonToMove, gActuel, gNouveau);
-                calculCout();
-                double coutApres = getCout();
-                double delta = coutApres - coutAvant;
-
-                // Metropolis acceptance criterion
-                if (delta < 0 || Math.exp(-delta / temperature) > random.nextDouble()) {
-                    // Move accepted
-                    if (coutApres < bestCost) {
-                        bestCost = coutApres;
-                        bestConnexions = new HashMap<>(this.connexions);
-                    }
-                } else {
-                    // Move rejected, revert the change
-                    changeConnexion(maisonToMove, gNouveau, gActuel);
-                    calculCout(); // Recalculate cost back to the 'avant' state
-                }
-            }
-            temperature *= refroidissement; // Cool down
-        }
-
-        // Restore the best solution found during the process
-        this.connexions = bestConnexions;
-        // And restore the state of all generators to match
-        for (Generateur g : generateurs) {
-            g.resetCharge();
-        }
-        for (Map.Entry<Maison, Generateur> entry : this.connexions.entrySet()) {
-            if (entry.getValue() != null) {
-                entry.getValue().addMaison(entry.getKey());
-            }
-        }
-        // Recalculate final cost metrics for the best state
-        calculCout();
-    }
-    public HashMap<Maison,Generateur> getConnexions() {
-        return connexions;
-    }
-
     public double getCout() {
         return cout;
     }
 
+    /**
+     * Retourne le taux d'utilisation moyen des générateurs.
+     *
+     * @return le taux moyen
+     */
     public double getTauxUtilisationMoyen() {
         return tauxUtilisationMoyen;
     }
 
+    /**
+     * Retourne la dispersion du réseau.
+     *
+     * @return la dispersion calculée
+     */
     public double getDisp() {
         return disp;
     }
 
+    /**
+     * Retourne le coefficient de pénalité.
+     *
+     * @return le coefficient de pénalité
+     */
     public double getPenalite() {
         return penalite;
     }
 
+    /**
+     * Retourne la surcharge totale du réseau.
+     *
+     * @return la surcharge calculée
+     */
     public double getSurcharge() {
         return surcharge;
     }
 
+    /**
+     * Retourne la charge totale actuelle du réseau.
+     *
+     * @return la charge en kW
+     */
     public int getCharge() {
         return charge;
     }
 
+    /**
+     * Retourne la capacité totale du réseau.
+     *
+     * @return la capacité en kW
+     */
     public int getCapacite() {
         return capacite;
     }
 
+    /**
+     * Retourne la liste des générateurs du réseau.
+     *
+     * @return la List des générateurs
+     */
     public List<Generateur> getGenerateurs() {
         return generateurs;
     }
-
-    public String getNom() {
-        return nom;
-    }
-
 }

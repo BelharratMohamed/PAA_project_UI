@@ -7,10 +7,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Scanner;
 
-public class main {
+public class MainSansUI {
     public static void main(String[] args) throws IOException {
         Scanner sc = new Scanner(System.in);
         Reseau r = new Reseau("r",10);
+        /**
+         *  Récupère les arguments mis en ligne de commande pour savoir si on passe directement au Menu3 ou d'abord par le Menu1
+         */
         if(args.length > 0) {
             String fichier = args[0];
             try {

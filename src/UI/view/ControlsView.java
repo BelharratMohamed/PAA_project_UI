@@ -23,7 +23,6 @@ public class ControlsView extends VBox {
 
     private Button saveButton;
     private Button solveButton;
-    private Button clearButton;
 
     public ControlsView(ObservableList<String> maisonNames, ObservableList<String> generateurNames) {
         super(20);
@@ -95,9 +94,8 @@ public class ControlsView extends VBox {
 
         saveButton = new Button("Sauvegarder");
         solveButton = new Button("Résoudre");
-        clearButton = new Button("Clear");
 
-        VBox actionsBox = new VBox(10, saveButton, solveButton, clearButton);
+        VBox actionsBox = new VBox(10, saveButton, solveButton);
 
         getChildren().addAll(
                 titleGenerateur, gridGenerateur,
@@ -122,5 +120,4 @@ public class ControlsView extends VBox {
     public Button getAddConnectionButton() { return addConnectionButton; }
     public Button getSaveButton() { return saveButton; }
     public Button getSolveButton() { return solveButton; }
-    public Button getClearButton() { return clearButton; }
 }

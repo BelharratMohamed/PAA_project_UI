@@ -2,15 +2,22 @@ package UI.main;
 
 import UI.controller.MainController;
 import UI.view.ControlsView;
+import UI.view.NetworkView;
 import UI.view.TerminalView;
+import factory.ReseauFactory;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import reseau.Generateur;
+import reseau.Maison;
 import reseau.Reseau;
+
+import java.io.File;
 
 public class MainUI extends Application {
 
@@ -18,31 +25,55 @@ public class MainUI extends Application {
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Application de Gestion de Réseau");
 
-        // Model
-        Reseau reseau = new Reseau("Mon Réseau", 10);
+        Parameters params = getParameters();
+        Reseau reseau;
+        TerminalView terminalView = new TerminalView();
+
+        if (!params.getRaw().isEmpty()) {
+            String filePath = params.getRaw().get(0);
+            try {
+                reseau = ReseauFactory.parserReseau(10, filePath);
+                terminalView.appendText("Réseau chargé depuis : " + filePath + "\n");
+            } catch (Exception e) {
+                reseau = new Reseau("Mon Réseau", 10);
+                terminalView.appendText("Erreur lors du chargement du fichier : " + e.getMessage() + "\n");
+            }
+        } else {
+            reseau = new Reseau("Mon Réseau", 10);
+        }
+
+
         ObservableList<String> generateurNames = FXCollections.observableArrayList();
         ObservableList<String> maisonNames = FXCollections.observableArrayList();
 
+
         // Views
-        TerminalView terminalView = new TerminalView();
         ControlsView controlsView = new ControlsView(maisonNames, generateurNames);
+        NetworkView networkView = new NetworkView(reseau);
 
         // Controller
-        new MainController(reseau, terminalView, controlsView, primaryStage, generateurNames, maisonNames);
+        new MainController(reseau, terminalView, controlsView, networkView, primaryStage, generateurNames, maisonNames);
 
         // Layout
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(10));
-        root.setLeft(terminalView);
+        ScrollPane scrollPane = new ScrollPane(networkView);
+        scrollPane.setFitToWidth(true);
+        root.setCenter(scrollPane);
         root.setRight(controlsView);
+        root.setBottom(terminalView);
+
 
         // Scene
-        Scene scene = new Scene(root, 800, 600);
+        Scene scene = new Scene(root, 1000, 700);
         primaryStage.setScene(scene);
         primaryStage.show();
+        
+        networkView.update();
     }
 
     public static void main(String[] args) {
         launch(args);
     }
 }
+

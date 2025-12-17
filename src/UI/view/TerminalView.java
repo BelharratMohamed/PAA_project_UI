@@ -6,6 +6,6 @@ public class TerminalView extends TextArea {
 
     public TerminalView() {
         setEditable(false);
-        setPrefWidth(400);
+        setPrefHeight(100);
     }
 }

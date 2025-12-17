@@ -1,14 +1,12 @@
 package UI.controller;
 
 import UI.view.ControlsView;
+import UI.view.NetworkView;
 import UI.view.TerminalView;
 import javafx.collections.ObservableList;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import reseau.Consommation;
-import reseau.Generateur;
-import reseau.Maison;
-import reseau.Reseau;
+import reseau.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,20 +16,32 @@ public class MainController {
     private Reseau reseau;
     private TerminalView terminal;
     private ControlsView controls;
+    private NetworkView networkView;
     private Stage stage;
     private ObservableList<String> generateurNames;
     private ObservableList<String> maisonNames;
 
 
-    public MainController(Reseau reseau, TerminalView terminal, ControlsView controls, Stage stage, ObservableList<String> generateurNames, ObservableList<String> maisonNames) {
+    public MainController(Reseau reseau, TerminalView terminal, ControlsView controls, NetworkView networkView, Stage stage, ObservableList<String> generateurNames, ObservableList<String> maisonNames) {
         this.reseau = reseau;
         this.terminal = terminal;
         this.controls = controls;
+        this.networkView = networkView;
         this.stage = stage;
         this.generateurNames = generateurNames;
         this.maisonNames = maisonNames;
 
+        maisonNames.clear();
+        for(Maison m : reseau.getMaisons()){
+            maisonNames.add(m.getNom());
+        }
+        generateurNames.clear();
+        for(Generateur g : reseau.getGenerateurs()){
+            generateurNames.add(g.getNom());
+        }
+
         attachEventHandlers();
+        networkView.update();
     }
 
     private void attachEventHandlers() {
@@ -40,7 +50,6 @@ public class MainController {
         controls.getAddConnectionButton().setOnAction(e -> addConnection());
         controls.getSaveButton().setOnAction(e -> save());
         controls.getSolveButton().setOnAction(e -> solve());
-        controls.getClearButton().setOnAction(e -> clear());
     }
 
     private void addGenerateur() {
@@ -60,6 +69,7 @@ public class MainController {
             reseau.addGenerateur(new Generateur(nom, capacite));
             generateurNames.add(nom);
             terminal.appendText("Générateur '" + nom + "' avec une capacité de " + capacite + " ajouté.\n");
+            networkView.update();
         } catch (NumberFormatException e) {
             terminal.appendText("Erreur: La capacité doit être un nombre entier.\n");
         }
@@ -81,6 +91,7 @@ public class MainController {
             reseau.addMaison(new Maison(nom, consommation));
             maisonNames.add(nom);
             terminal.appendText("Maison '" + nom + "' avec une consommation " + consommation + " ajoutée.\n");
+            networkView.update();
         } catch (Exception e) {
             terminal.appendText("Erreur : " + e.getMessage() + "\n");
         }
@@ -96,6 +107,7 @@ public class MainController {
         }
         reseau.addConnexion(maisonNom, generateurNom);
         terminal.appendText("Connexion ajoutée entre '" + maisonNom + "' et '" + generateurNom + "'.\n");
+        networkView.update();
     }
 
     private void save() {
@@ -124,17 +136,15 @@ public class MainController {
         double oldCost = reseau.getCout();
         terminal.appendText("Cout initial: " + oldCost + "\n");
 
-        reseau.solveurNaif();
+        Optimisation.optimiser(reseau);
+        Optimisation.afficherDetails(reseau);
 
         reseau.calculCout();
         double newCost = reseau.getCout();
         terminal.appendText("Nouveau cout: " + newCost + "\n");
         
         terminal.appendText("Solveur terminé.\n");
-        terminal.appendText(reseau.toString());
-    }
-
-    private void clear() {
-        terminal.clear();
+        networkView.update();
     }
 }
+

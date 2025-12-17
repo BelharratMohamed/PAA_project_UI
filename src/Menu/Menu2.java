@@ -4,52 +4,76 @@ import reseau.*;
 import java.util.*;
 
 /**
- * Deuxième menu de notre projet, permet de gérer le réseau créé dans le menu précédent.
- * Il offre trois actions : calculer le coût, modifier une connexion, ou afficher le réseau.
+ * Menu de gestion manuelle du réseau électrique.
+ * <p>
+ * Permet de calculer le coût, modifier les connexions manuellement
+ * et afficher l'état détaillé du réseau.
+ *
+ * @author Votre nom
+ * @version 1.0
  */
 public class Menu2 {
 
+    /**
+     * Affiche et gère le menu de gestion du réseau.
+     * <p>
+     * Options disponibles :
+     * <ul>
+     * <li>Calcul et affichage du coût du réseau</li>
+     * <li>Modification manuelle d'une connexion</li>
+     * <li>Affichage détaillé du réseau</li>
+     * <li>Retour au menu principal</li>
+     * </ul>
+     *
+     * @param sc le scanner pour la saisie utilisateur
+     * @param reseau le réseau à gérer
+     */
     public static void menu(Scanner sc, Reseau reseau) {
         int choix;
         boolean fin = false;
-        do{
+        do {
             afficherMenu();
             try {
                 choix = Integer.parseInt(sc.nextLine());
-                switch(choix){
-                    case 1:{
+                switch (choix) {
+                    case 1: {
                         calculerCout(reseau);
                         break;
                     }
-                    case 2:{
+                    case 2: {
                         modifierConnexion(sc, reseau);
                         break;
                     }
-                    case 3:{
+                    case 3: {
                         afficherReseau(reseau);
                         break;
                     }
-                    case 4:{
+                    case 4: {
                         fin = true;
                         break;
                     }
-                    default:{
+                    default: {
                         System.out.println("Erreur de choix, entrez un nombre entre 1 et 4.");
                     }
                 }
-            }catch (NumberFormatException e){
+            } catch (NumberFormatException e) {
                 System.out.println("Erreur de choix, entrez un nombre entre 1 et 4.");
             }
 
-        }while(!fin);
+        } while (!fin);
     }
 
     /**
-     * Calcule et affiche le coût du réseau
+     * Calcule et affiche le coût détaillé du réseau.
+     * <p>
+     * Affiche le taux d'utilisation moyen, la dispersion,
+     * la surcharge, la pénalité et le coût total.
+     *
+     * @param reseau le réseau à analyser
      */
-    private static void calculerCout(Reseau reseau){
+    private static void calculerCout(Reseau reseau) {
         reseau.calculCout();
-        System.out.println("===== COÛT DU RÉSEAU \"" + reseau.getNom() + "\" =====");
+        System.out.println("===== COÛT DU RÉSEAU =====");
         System.out.printf("Taux d'utilisation moyen : %.3f%n", reseau.getTauxUtilisationMoyen());
         System.out.printf("Dispersion totale : %.3f%n", reseau.getDisp());
         System.out.printf("Surcharge totale : %.3f%n", reseau.getSurcharge());
@@ -59,12 +83,19 @@ public class Menu2 {
     }
 
     /**
-     * Permet de modifier une connexion existante (ancienne -> nouvelle)
+     * Permet de modifier manuellement une connexion existante.
+     * <p>
+     * Demande l'ancienne connexion (maison-générateur) puis la nouvelle.
+     * Vérifie que la maison reste identique et que le générateur change.
+     * Format accepté : {@code M1 G1} ou {@code G1 M1}
+     *
+     * @param sc le scanner pour la saisie utilisateur
+     * @param reseau le réseau à modifier
      */
-    private static void modifierConnexion(Scanner sc, Reseau reseau){
+    private static void modifierConnexion(Scanner sc, Reseau reseau) {
         System.out.println("Saisissez l'ANCIENNE connexion (format : M1 G1 ou G1 M1) :");
         String ancienneLigne = sc.nextLine();
-        if(!ancienneLigne.matches("(?i)^[A-Za-z0-9]+\\s[A-Za-z0-9]+$")){
+        if (!ancienneLigne.matches("(?i)^[A-Za-z0-9]+\\s[A-Za-z0-9]+$")) {
             System.out.println("Erreur : format INCORRECT");
             return;
         }
@@ -75,11 +106,13 @@ public class Menu2 {
         String nomMaisonAncienne;
         String nomGenerateurAncien;
 
-        if(reseau.maisonDansReseau(ancienA) && reseau.generateurDansReseau(ancienB)){
-            nomMaisonAncienne = ancienA; nomGenerateurAncien = ancienB;
-        }else if(reseau.maisonDansReseau(ancienB) && reseau.generateurDansReseau(ancienA)){
-            nomMaisonAncienne = ancienB; nomGenerateurAncien = ancienA;
-        }else{
+        if (reseau.maisonDansReseau(ancienA) && reseau.generateurDansReseau(ancienB)) {
+            nomMaisonAncienne = ancienA;
+            nomGenerateurAncien = ancienB;
+        } else if (reseau.maisonDansReseau(ancienB) && reseau.generateurDansReseau(ancienA)) {
+            nomMaisonAncienne = ancienB;
+            nomGenerateurAncien = ancienA;
+        } else {
             System.out.println("Erreur : maison et/ou générateur inexistant.");
             return;
         }
@@ -100,7 +133,7 @@ public class Menu2 {
 
         System.out.println("Saisissez la NOUVELLE connexion (même maison, autre générateur) :");
         String nouvelleLigne = sc.nextLine();
-        if(!nouvelleLigne.matches("(?i)^[A-Za-z0-9]+\\s[A-Za-z0-9]+$")){
+        if (!nouvelleLigne.matches("(?i)^[A-Za-z0-9]+\\s[A-Za-z0-9]+$")) {
             System.out.println("Erreur : format INCORRECT");
             return;
         }
@@ -111,20 +144,22 @@ public class Menu2 {
         String nomMaisonNouvelle;
         String nomGenerateurNouveau;
 
-        if(reseau.maisonDansReseau(nouveauA) && reseau.generateurDansReseau(nouveauB)){
-            nomMaisonNouvelle = nouveauA; nomGenerateurNouveau = nouveauB;
-        }else if(reseau.maisonDansReseau(nouveauB) && reseau.generateurDansReseau(nouveauA)){
-            nomMaisonNouvelle = nouveauB; nomGenerateurNouveau = nouveauA;
-        }else{
+        if (reseau.maisonDansReseau(nouveauA) && reseau.generateurDansReseau(nouveauB)) {
+            nomMaisonNouvelle = nouveauA;
+            nomGenerateurNouveau = nouveauB;
+        } else if (reseau.maisonDansReseau(nouveauB) && reseau.generateurDansReseau(nouveauA)) {
+            nomMaisonNouvelle = nouveauB;
+            nomGenerateurNouveau = nouveauA;
+        } else {
             System.out.println("Erreur : maison et/ou générateur inexistant.");
             return;
         }
 
-        if(!nomMaisonNouvelle.equals(nomMaisonAncienne)){
+        if (!nomMaisonNouvelle.equals(nomMaisonAncienne)) {
             System.out.println("Erreur : la maison doit rester la même (" + nomMaisonAncienne + ").");
             return;
         }
-        if(nomGenerateurNouveau.equals(nomGenerateurAncien)){
+        if (nomGenerateurNouveau.equals(nomGenerateurAncien)) {
             System.out.println("Erreur : le nouveau générateur doit être différent de l'ancien (" + nomGenerateurAncien + ").");
             return;
         }
@@ -135,43 +170,49 @@ public class Menu2 {
     }
 
     /**
-     * Affiche le réseau de manière lisible
+     * Affiche l'état complet du réseau de manière structurée.
+     * <p>
+     * Pour chaque générateur, liste les maisons connectées avec leur
+     * consommation, la charge totale et le taux d'utilisation.
+     * Affiche également les maisons non connectées s'il y en a.
+     *
+     * @param reseau le réseau à afficher
      */
-    private static void afficherReseau(Reseau reseau){
+    private static void afficherReseau(Reseau reseau) {
         System.out.println();
-        System.out.println("===== RÉSEAU \"" + reseau.getNom() + "\" =====");
+        System.out.println("===== RÉSEAU =====");
 
         List<String> nomsGenerateurs = new ArrayList<String>();
-        for(Generateur g : reseau.getGenerateurs()){
+        for (Generateur g : reseau.getGenerateurs()) {
             nomsGenerateurs.add(g.getNom());
         }
         Collections.sort(nomsGenerateurs);
 
-        for(String nomGenerateur : nomsGenerateurs){
+        for (String nomGenerateur : nomsGenerateurs) {
             Generateur generateur = reseau.getGenerateur(nomGenerateur);
             List<String> infosMaisons = new ArrayList<>();
-            for(Maison maison : reseau.getMaisons(generateur)){
+            for (Maison maison : reseau.getMaisons(generateur)) {
                 int consommation = maison.getConsommation();
                 infosMaisons.add(maison.getNom() + "(" + consommation + "kW)");
             }
             Collections.sort(infosMaisons);
 
             System.out.println("- " + generateur.getNom() + " (capacité : " + generateur.getCapacite() + "kW)");
-            if(infosMaisons.isEmpty()){
+            if (infosMaisons.isEmpty()) {
                 System.out.println("  Maisons alimentées : (aucune)");
-            }else{
+            } else {
                 System.out.println("  Maisons alimentées : " + String.join(", ", infosMaisons));
             }
             System.out.printf("  Charge totale : %dkW | taux d'utilisation = %.3f%n", reseau.getCharge(), generateur.calculTauxUtilisation());
         }
 
         List<String> maisonsNonConnectees = new ArrayList<>();
-        for(Maison maison : reseau.getMaisons()){
-            if(!reseau.maisonConnecte(maison)){
+        for (Maison maison : reseau.getMaisons()) {
+            if (!reseau.maisonConnecte(maison)) {
                 maisonsNonConnectees.add(maison.getNom());
             }
         }
-        if(!maisonsNonConnectees.isEmpty()){
+        if (!maisonsNonConnectees.isEmpty()) {
             Collections.sort(maisonsNonConnectees);
             System.out.println("Maisons non connectées : " + String.join(", ", maisonsNonConnectees));
         }
@@ -179,7 +220,10 @@ public class Menu2 {
         System.out.println();
     }
 
-    private static void afficherMenu(){
+    /**
+     * Affiche les options du menu à l'écran.
+     */
+    private static void afficherMenu() {
         System.out.print("1) Calculer le coût du réseau \n" +
                 "2) Modifier une connexion \n" +
                 "3) Afficher le réseau \n" +
