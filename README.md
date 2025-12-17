@@ -1,52 +1,74 @@
-## 🏠⚡ Home and Generator Management System (Interface Graphique - JavaFX)
+## Projet programmation avancée et applications - Réseau de distribution d'électricité
 
-Ce dépôt contient la version avec **interface utilisateur graphique (GUI)** du système de gestion de maisons et de générateurs, développé en **JavaFX**.
-
----
-
-### 🌟 Aperçu du Projet
-
-Le **Home and Generator Management System** modélise et simule des réseaux électriques simplifiés composés de générateurs et de maisons. L'objectif principal est de déterminer l'allocation de maisons aux générateurs la plus **efficace** en minimisant les coûts liés au **déséquilibre énergétique** et à la **surcharge (overload)**.
-
-Cette version JavaFX transforme l'application console initiale en une solution interactive et visuelle, rendant l'analyse et la modification du réseau plus intuitive.
+Ce dépôt contient la version avec **interface utilisateur graphique** du système de gestion de réseau de distribution d'électricité en utilisant **JavaFX**.
 
 ---
 
-### ✨ Fonctionnalités Clés (GUI)
+### Comment exécuter le projet
 
-En plus de la logique métier existante, cette implémentation JavaFX permet :
+#### Prérequis
 
-* **Visualisation du Réseau :** Affichage clair et dynamique des maisons, des générateurs et de leurs connexions.
-* **Gestion Interactive :** Ajouter, modifier ou supprimer des maisons et des générateurs directement via l'interface.
-* **Modification des Connexions :** Drag-and-drop ou contrôles pour ajuster les allocations de maisons aux générateurs et observer l'impact en temps réel.
-* **Affichage des Coûts :** Présentation graphique et numérique instantanée du coût total du réseau (déséquilibre et surcharge) pour évaluer l'efficacité de la configuration.
-* **Comparaison de Configurations :** Outils pour charger, sauvegarder et comparer différentes solutions de réseau.
+*   Java Development Kit (JDK) 21 ou supérieur.
+*   Apache Maven.
 
+#### Compilation et Lancement
+
+Le projet utilise Maven pour la gestion des dépendances et la compilation.
+
+1.  **Lancement simple :**
+
+    Pour compiler le projet et lancer l'application, exécutez la commande suivante à la racine du projet :
+
+    ```bash
+    mvn clean javafx:run
+    ```
+
+2.  **Lancement avec un fichier de configuration :**
+
+    Pour lancer l'application en chargeant directement un réseau depuis un fichier, vous pouvez passer le chemin du fichier en argument.
+
+    ```bash
+    mvn clean javafx:run -Dexec.args="<chemin_vers_le_fichier>"
+    ```
+
+    Par exemple :
+
+    ```bash
+    mvn clean javafx:run -Dexec.args="instance7.txt"
+    ```
 
 ---
 
-### 🔌 Logique Métier (Modèle de Réseau)
+### Fonctionnalités Clés (GUI)
+
+L'interface graphique est divisée en trois panneaux principaux pour une gestion intuitive :
+
+*   **Vue Réseau (Panneau central) :**
+    *   Visualisation dynamique des maisons, des générateurs et de leurs connexions.
+
+*   **Panneau de Contrôle (Panneau de droite) :**
+    *   **Gestion du Réseau :** Charger un réseau depuis un fichier ou en créer un nouveau.
+    *   **Gestion des Composants :** Ajouter des maisons et des générateurs.
+    *   **Gestion des Connexions :** Changer la connexion d'une maison.
+    *   **Optimisation :** Lancer l'algorithme d'optimisation pour trouver la meilleure configuration et afficher le coût.
+
+*   **Terminal (Panneau du bas) :**
+    *   Affiche des journaux (logs) sur les actions effectuées (chargement, sauvegarde, erreurs, etc.).
+
+---
+
+### Logique Métier (Modèle de Réseau)
 
 Le cœur de la simulation est basé sur les caractéristiques suivantes :
 
-| Élément | Description | Consommation/Capacité |
-| :--- | :--- | :--- |
-| **Maisons** | Unités de consommation d'énergie. | *Faible* : 10 kW, *Normale* : 20 kW, *Forte* : 40 kW |
-| **Générateurs** | Unités de production d'énergie. | **Capacité Maximale** configurable. |
+| Élément      | Description                       | Consommation/Capacité                          |
+| :----------- | :-------------------------------- |:-----------------------------------------------|
+| **Maisons**    | Unités de consommation d'énergie. | Faible : 10 kW, Normale : 20 kW, Forte : 40 kW |
+| **Générateurs**| Unités de production d'énergie.   | Capacité configurable.                         |
 
 #### Calcul des Coûts
 
-Le coût total d'une configuration est calculée pour évaluer sa performance, en prenant en compte :
+Le coût total d'une configuration est calculé pour évaluer sa performance, en prenant en compte :
 
 1.  **Déséquilibre de Charge :** Pénalité si la charge totale est loin de la capacité totale (efficacité).
-2.  **Surcharge (Overload) :** Pénalité significative si la demande dépasse la capacité maximale d'un générateur.
-
----
-
-### 🚀 Dépôt Initial (Logique Sans UI)
-
-La logique métier et le modèle de données de base sont hérités et conservés dans le projet **Java console initial**.
-
-* **Dépôt Original (sans UI) :** [https://github.com/BelharratMohamed/PAA_project](https://github.com/BelharratMohamed/PAA_project)
-
----
+2.  **Surcharge :** Pénalité significative si la demande dépasse la capacité maximale d'un générateur.
