@@ -47,14 +47,14 @@ public class MainUI extends Application {
         ObservableList<String> maisonNames = FXCollections.observableArrayList();
 
 
-        // Views
+        // Vues
         ControlsView controlsView = new ControlsView(maisonNames, generateurNames);
         NetworkView networkView = new NetworkView(reseau);
 
-        // Controller
+        // Contrôleur
         new MainController(reseau, terminalView, controlsView, networkView, primaryStage, generateurNames, maisonNames);
 
-        // Layout
+        // Mise en page
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(10));
         ScrollPane scrollPane = new ScrollPane(networkView);
@@ -64,7 +64,7 @@ public class MainUI extends Application {
         root.setBottom(terminalView);
 
 
-        // Scene
+        // Scène
         Scene scene = new Scene(root, 1000, 700);
         primaryStage.setScene(scene);
         primaryStage.show();

@@ -9,32 +9,37 @@ Ce dépôt contient la version avec **interface utilisateur graphique** du syst�
 #### Prérequis
 
 *   Java Development Kit (JDK) 21 ou supérieur.
-*   Apache Maven.
+*   JavaFX SDK 21 ou supérieur.
 
-#### Compilation et Lancement
+#### Compilation et Exécution
 
-Le projet utilise Maven pour la gestion des dépendances et la compilation.
+Pour compiler et exécuter le projet sans Maven, suivez ces étapes :
 
-1.  **Lancement simple :**
+1.  **Téléchargez JavaFX SDK** : Assurez-vous d'avoir téléchargé le JavaFX SDK (version 21 ou supérieure) et notez le chemin d'accès à son répertoire `lib`. Nous appellerons ce chemin `<CHEMIN_VERS_JAVAFX_LIB>`.
 
-    Pour compiler le projet et lancer l'application, exécutez la commande suivante à la racine du projet :
+2.  **Compilation** : Ouvrez un terminal à la racine du projet et exécutez la commande suivante pour compiler les fichiers sources :
 
     ```bash
-    mvn clean javafx:run
+    mkdir -p target/classes
+    javac --module-path <CHEMIN_VERS_JAVAFX_LIB> --add-modules javafx.controls,javafx.fxml -d target/classes $(find src -name "*.java")
     ```
 
-2.  **Lancement avec un fichier de configuration :**
-
-    Pour lancer l'application en chargeant directement un réseau depuis un fichier, vous pouvez passer le chemin du fichier en argument.
+3.  **Exécution** : Après la compilation, vous pouvez exécuter l'application avec la commande suivante :
 
     ```bash
-    mvn clean javafx:run -Dexec.args="<chemin_vers_le_fichier>"
+    java --module-path <CHEMIN_VERS_JAVAFX_LIB> --add-modules javafx.controls,javafx.fxml -cp target/classes main.MainUI
+    ```
+
+    Pour lancer l'application en chargeant un réseau depuis un fichier, passez le chemin du fichier en argument :
+
+    ```bash
+    java --module-path <CHEMIN_VERS_JAVAFX_LIB> --add-modules javafx.controls,javafx.fxml -cp target/classes main.MainUI <chemin_vers_le_fichier>
     ```
 
     Par exemple :
 
     ```bash
-    mvn clean javafx:run -Dexec.args="instance7.txt"
+    java --module-path <CHEMIN_VERS_JAVAFX_LIB> --add-modules javafx.controls,javafx.fxml -cp target/classes main.MainUI reseau.txt
     ```
 
 ---
