@@ -9,7 +9,7 @@ Ce dépôt contient la version avec **interface utilisateur graphique** du syst�
 #### Prérequis
 
 *   Java Development Kit (JDK) 21 ou supérieur.
-*   JavaFX SDK 21 ou supérieur.
+*   JavaFX SDK 21.
 
 #### Compilation et Exécution
 
@@ -27,20 +27,27 @@ Pour compiler et exécuter le projet sans Maven, suivez ces étapes :
 3.  **Exécution** : Après la compilation, vous pouvez exécuter l'application avec la commande suivante :
 
     ```bash
-    java --module-path <CHEMIN_VERS_JAVAFX_LIB> --add-modules javafx.controls,javafx.fxml -cp target/classes main.MainUI
+    java --module-path <CHEMIN_VERS_JAVAFX_LIB>:target/classes --add-modules javafx.controls,javafx.fxml -m UI/main.MainUI
     ```
 
     Pour lancer l'application en chargeant un réseau depuis un fichier, passez le chemin du fichier en argument :
 
     ```bash
-    java --module-path <CHEMIN_VERS_JAVAFX_LIB> --add-modules javafx.controls,javafx.fxml -cp target/classes main.MainUI <chemin_vers_le_fichier>
+    java --module-path <CHEMIN_VERS_JAVAFX_LIB>:target/classes --add-modules javafx.controls,javafx.fxml -m UI/main.MainUI <chemin_vers_le_fichier>
+    ```
+
+    Pour inclure une valeur de pénalité personnalisée (un nombre flottant) en plus du fichier de configuration :
+
+    ```bash
+    java --module-path <CHEMIN_VERS_JAVAFX_LIB>:target/classes --add-modules javafx.controls,javafx.fxml -m UI/main.MainUI <chemin_vers_le_fichier> <valeur_penalite>
     ```
 
     Par exemple :
 
     ```bash
-    java --module-path <CHEMIN_VERS_JAVAFX_LIB> --add-modules javafx.controls,javafx.fxml -cp target/classes main.MainUI reseau.txt
+    java --module-path <CHEMIN_VERS_JAVAFX_LIB>:target/classes --add-modules javafx.controls,javafx.fxml -m UI/main.MainUI reseau.txt 10.0
     ```
+    
 
 ---
 
@@ -56,6 +63,7 @@ L'interface graphique est divisée en trois panneaux principaux pour une gestion
     *   **Gestion des Composants :** Ajouter des maisons et des générateurs.
     *   **Gestion des Connexions :** Changer la connexion d'une maison.
     *   **Optimisation :** Lancer l'algorithme d'optimisation pour trouver la meilleure configuration et afficher le coût.
+    *   Note : Si un fichier est fourni en paramètre au lancement, seuls les boutons 'Optimisation' et 'Sauvegarder' seront visibles.
 
 *   **Terminal (Panneau du bas) :**
     *   Affiche des journaux (logs) sur les actions effectuées (chargement, sauvegarde, erreurs, etc.).
