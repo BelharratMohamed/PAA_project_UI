@@ -7,7 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Scanner;
 
-public class mainSansUI {
+public class MainSansUI {
     public static void main(String[] args) throws IOException {
         Scanner sc = new Scanner(System.in);
         Reseau r = new Reseau(10);
