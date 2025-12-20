@@ -139,6 +139,7 @@ public class MainController {
             terminal.appendText("Erreur : Il n'y a pas de maisons ou de générateurs dans le réseau pour lancer le solveur.\n");
             return;
         }
+        terminal.appendText("\n\n"); // Add newlines before optimization
         terminal.appendText("Lancement du solveur...\n");
 
         reseau.calculCout();

@@ -24,12 +24,15 @@ public class ControlsView extends VBox {
     private Button saveButton;
     private Button solveButton;
 
-    public ControlsView(ObservableList<String> maisonNames, ObservableList<String> generateurNames) {
+    public ControlsView(ObservableList<String> maisonNames, ObservableList<String> generateurNames, boolean fileProvided) {
         super(20);
         setPadding(new Insets(10));
         setSpacing(10);
 
+        VBox contentBox = new VBox(10);
+
         // --- Ajout d'un générateur ---
+        VBox generateurSection = new VBox(10);
         Label titleGenerateur = new Label("Ajouter un générateur");
         titleGenerateur.setStyle("-fx-font-weight: bold;");
 
@@ -48,8 +51,11 @@ public class ControlsView extends VBox {
         gridGenerateur.add(new Label("Capacité:"), 0, 1);
         gridGenerateur.add(capaciteField, 1, 1);
         gridGenerateur.add(addGenerateurButton, 1, 2);
+        generateurSection.getChildren().addAll(titleGenerateur, gridGenerateur);
+
 
         // --- Ajout d'une maison ---
+        VBox maisonSection = new VBox(10);
         Label titleMaison = new Label("Ajouter une maison");
         titleMaison.setStyle("-fx-font-weight: bold;");
 
@@ -69,8 +75,11 @@ public class ControlsView extends VBox {
         gridMaison.add(new Label("Consommation:"), 0, 1);
         gridMaison.add(consommationComboBox, 1, 1);
         gridMaison.add(addMaisonButton, 1, 2);
+        maisonSection.getChildren().addAll(titleMaison, gridMaison);
+
 
         // --- Ajout d'une connexion ---
+        VBox connectionSection = new VBox(10);
         Label titleConnection = new Label("Ajouter une connexion");
         titleConnection.setStyle("-fx-font-weight: bold;");
 
@@ -87,8 +96,11 @@ public class ControlsView extends VBox {
         gridConnection.add(new Label("Générateur:"), 0, 1);
         gridConnection.add(generateurComboBox, 1, 1);
         gridConnection.add(addConnectionButton, 1, 2);
+        connectionSection.getChildren().addAll(titleConnection, gridConnection);
+
 
         // --- Actions ---
+        VBox actionsSection = new VBox(10);
         Label titleActions = new Label("Actions");
         titleActions.setStyle("-fx-font-weight: bold;");
 
@@ -96,16 +108,29 @@ public class ControlsView extends VBox {
         solveButton = new Button("Optimiser");
 
         VBox actionsBox = new VBox(10, saveButton, solveButton);
+        actionsSection.getChildren().addAll(titleActions, actionsBox);
 
-        getChildren().addAll(
-                titleGenerateur, gridGenerateur,
-                new Separator(),
-                titleMaison, gridMaison,
-                new Separator(),
-                titleConnection, gridConnection,
-                new Separator(),
-                titleActions, actionsBox
+
+        if (fileProvided) {
+            generateurSection.setVisible(false);
+            generateurSection.setManaged(false); // Does not take up space
+            maisonSection.setVisible(false);
+            maisonSection.setManaged(false);
+            connectionSection.setVisible(false);
+            connectionSection.setManaged(false);
+        }
+
+        contentBox.getChildren().addAll(
+            generateurSection,
+            new Separator(),
+            maisonSection,
+            new Separator(),
+            connectionSection,
+            new Separator(),
+            actionsSection
         );
+
+        getChildren().add(contentBox);
     }
 
     // Getters pour que le contrôleur puisse accéder aux composants

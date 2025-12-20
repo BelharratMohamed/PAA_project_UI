@@ -24,18 +24,63 @@ public class MainUI extends Application {
         Parameters params = getParameters();
         Reseau reseau;
         TerminalView terminalView = new TerminalView();
+        double penalite = 10.0; // Pénalité par défaut 10.0
+        boolean fileProvided = false;
 
         if (!params.getRaw().isEmpty()) {
-            String filePath = params.getRaw().get(0);
+            String firstArg = params.getRaw().get(0);
+
+            // On cherche à savoir si seulement la pénalité est passé en argument
+            boolean firstArgIspenalite = false;
             try {
-                reseau = ReseauFactory.parserReseau(10, filePath);
-                terminalView.appendText("Réseau chargé depuis : " + filePath + "\n");
-            } catch (Exception e) {
-                reseau = new Reseau(10);
-                terminalView.appendText("Erreur lors du chargement du fichier : " + e.getMessage() + "\n");
+                if (firstArg.matches("-?\\d+(\\.\\d+)?")) {
+                    penalite = Double.parseDouble(firstArg);
+                    firstArgIspenalite = true;
+                }
+            } catch (NumberFormatException e) {
+                // C'est probablement un fichier
             }
-        } else {
-            reseau = new Reseau(10);
+
+
+            // Handle cases: file_path, penalite, file_path penalite, or just penalite (if not file)
+            if (!firstArgIspenalite || params.getRaw().size() > 1) { // It's a file path or file_path + penalite
+                String filePath = firstArgIspenalite ? (params.getRaw().size() > 1 ? params.getRaw().get(1) : null) : firstArg;
+                if (filePath != null) {
+                    fileProvided = true;
+                    if (params.getRaw().size() > 1 && !firstArgIspenalite) { // file_path penalite
+                        try {
+                            penalite = Double.parseDouble(params.getRaw().get(1));
+                        } catch (NumberFormatException e) {
+                            terminalView.appendText("Pénalite invalide, pénalité par défaut utilisée (10.0)\n");
+                        }
+                    } else if (params.getRaw().size() > 2) { // file_path penalite (extra args) - take the second as penalite
+                        try {
+                            penalite = Double.parseDouble(params.getRaw().get(2));
+                        } catch (NumberFormatException e) {
+                            terminalView.appendText("Pénalite invalide, pénalité par défaut utilisée (10.0)\n");
+                        }
+                    }
+
+                    try {
+                        reseau = ReseauFactory.parserReseau(penalite, filePath);
+                        terminalView.appendText("Réseau chargé depuis : " + filePath + " avec pénalité " + penalite + "\n");
+                    } catch (Exception e) {
+                        reseau = new Reseau(penalite);
+                        terminalView.appendText("Erreur lors du chargement du fichier '" + filePath + "': " + e.getMessage() + "\n");
+                        terminalView.appendText("Création d'un réseau vide avec pénalité " + penalite + ".\n");
+                    }
+                } else { // No explicit file path, only penalite
+                    reseau = new Reseau(penalite);
+                    terminalView.appendText("Création d'un réseau vide avec pénalité " + penalite + ".\n");
+                }
+            } else { // Only a penalite argument was provided
+                reseau = new Reseau(penalite);
+                terminalView.appendText("Création d'un réseau vide avec pénalité " + penalite + ".\n");
+            }
+
+        } else { // No arguments
+            reseau = new Reseau(penalite); // Use default penalite
+            terminalView.appendText("Création d'un réseau vide avec pénalité " + penalite + ".\n");
         }
 
 
@@ -44,7 +89,7 @@ public class MainUI extends Application {
 
 
         // Vues
-        ControlsView controlsView = new ControlsView(maisonNames, generateurNames);
+        ControlsView controlsView = new ControlsView(maisonNames, generateurNames, fileProvided);
         NetworkView networkView = new NetworkView(reseau);
 
         // Contrôleur
