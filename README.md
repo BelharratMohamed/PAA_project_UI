@@ -47,7 +47,14 @@ Pour compiler et exécuter le projet sans Maven, suivez ces étapes :
     ```bash
     java --module-path <CHEMIN_VERS_JAVAFX_LIB>:target/classes --add-modules javafx.controls,javafx.fxml -m UI/main.MainUI reseau.txt 10.0
     ```
-    
+
+    Vous avez également la possibilité de mettre uniquement la pénalité (par défaut a 10.0) :
+
+    ```bash
+    java --module-path <CHEMIN_VERS_JAVAFX_LIB>:target/classes --add-modules javafx.controls,javafx.fxml -m UI/main.MainUI <valeur_penalite>
+    ```
+
+NB : Un main sans l'interface graphique est également disponible dans le code en cas de problème dans le package Menu
 
 ---
 
